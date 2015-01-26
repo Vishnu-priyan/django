@@ -221,7 +221,7 @@ def items_for_result(cl, result, form):
                 if isinstance(value, (datetime.date, datetime.time)):
                     row_classes.append('nowrap')
             else:
-                if isinstance(f.remote_field, models.ManyToOneRel):
+                if f.one_to_many:
                     field_val = getattr(result, f.name)
                     if field_val is None:
                         result_repr = empty_value_display
