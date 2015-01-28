@@ -283,6 +283,12 @@ class BaseModelAdmin(six.with_metaclass(forms.MediaDefiningClass)):
         except AttributeError:
             return mark_safe(self.admin_site.empty_value_display)
 
+    def get_pk_value_for_object(self, obj):
+        """
+        Get the primary key value for an object.
+        """
+        return obj._get_pk_val()
+
     def get_fields(self, request, obj=None):
         """
         Hook for specifying fields.
@@ -1058,7 +1064,7 @@ class ModelAdmin(BaseModelAdmin):
         Determines the HttpResponse for the add_view stage.
         """
         opts = obj._meta
-        pk_value = obj._get_pk_val()
+        pk_value = self.get_pk_value_for_object(obj)
         preserved_filters = self.get_preserved_filters(request)
         obj_url = reverse(
             'admin:%s_%s_change' % (opts.app_label, opts.model_name),
@@ -1146,7 +1152,7 @@ class ModelAdmin(BaseModelAdmin):
             })
 
         opts = self.model._meta
-        pk_value = obj._get_pk_val()
+        pk_value = self.get_pk_value_for_object(obj)
         preserved_filters = self.get_preserved_filters(request)
 
         msg_dict = {
