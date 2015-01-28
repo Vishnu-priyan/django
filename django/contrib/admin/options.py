@@ -273,6 +273,12 @@ class BaseModelAdmin(six.with_metaclass(forms.MediaDefiningClass)):
                 'object_id': obj.pk
             })
 
+    def get_pk_value_for_object(self, obj):
+        """
+        Get the primary key value for an object.
+        """
+        return obj._get_pk_val()
+
     def get_fields(self, request, obj=None):
         """
         Hook for specifying fields.
@@ -1038,7 +1044,7 @@ class ModelAdmin(BaseModelAdmin):
         Determines the HttpResponse for the add_view stage.
         """
         opts = obj._meta
-        pk_value = obj._get_pk_val()
+        pk_value = self.get_pk_value_for_object(obj)
         preserved_filters = self.get_preserved_filters(request)
         msg_dict = {'name': force_text(opts.verbose_name), 'obj': force_text(obj)}
         # Here, we distinguish between different save types by checking for
@@ -1102,7 +1108,7 @@ class ModelAdmin(BaseModelAdmin):
             })
 
         opts = self.model._meta
-        pk_value = obj._get_pk_val()
+        pk_value = self.get_pk_value_for_object(obj)
         preserved_filters = self.get_preserved_filters(request)
 
         msg_dict = {'name': force_text(opts.verbose_name), 'obj': force_text(obj)}
