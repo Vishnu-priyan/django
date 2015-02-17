@@ -55,13 +55,6 @@ TO_FIELD_VAR = '_to_field'
 HORIZONTAL, VERTICAL = 1, 2
 
 
-def get_content_type_for_model(obj):
-    # Since this module gets imported in the application's root package,
-    # it cannot import models from other applications at the module level.
-    from django.contrib.contenttypes.models import ContentType
-    return ContentType.objects.get_for_model(obj, for_concrete_model=False)
-
-
 def get_ul_class(radio_style):
     return 'radiolist' if radio_style == VERTICAL else 'radiolist inline'
 
@@ -261,6 +254,13 @@ class BaseModelAdmin(six.with_metaclass(forms.MediaDefiningClass)):
             form_field.help_text = string_concat(help_text, ' ', msg) if help_text else msg
         return form_field
 
+    def get_content_type(self):
+        # Since this module gets imported in the application's root package,
+        # it cannot import models from other applications at the module level.
+        from django.contrib.contenttypes.models import ContentType
+        return ContentType.objects.get_for_model(self.model, for_concrete_model=False)
+
+
     def get_view_on_site_url(self, obj=None):
         if obj is None or not self.view_on_site:
             return None
@@ -270,7 +270,7 @@ class BaseModelAdmin(six.with_metaclass(forms.MediaDefiningClass)):
         elif self.view_on_site and hasattr(obj, 'get_absolute_url'):
             # use the ContentType lookup if view_on_site is True
             return reverse('admin:view_on_site', kwargs={
-                'content_type_id': get_content_type_for_model(obj).pk,
+                'content_type_id': self.get_content_type().pk,
                 'object_id': obj.pk
             })
 
@@ -717,7 +717,7 @@ class ModelAdmin(BaseModelAdmin):
         from django.contrib.admin.models import LogEntry, ADDITION
         LogEntry.objects.log_action(
             user_id=request.user.pk,
-            content_type_id=get_content_type_for_model(object).pk,
+            content_type_id=self.get_content_type().pk,
             object_id=object.pk,
             object_repr=force_text(object),
             action_flag=ADDITION,
@@ -733,7 +733,7 @@ class ModelAdmin(BaseModelAdmin):
         from django.contrib.admin.models import LogEntry, CHANGE
         LogEntry.objects.log_action(
             user_id=request.user.pk,
-            content_type_id=get_content_type_for_model(object).pk,
+            content_type_id=self.get_content_type().pk,
             object_id=object.pk,
             object_repr=force_text(object),
             action_flag=CHANGE,
@@ -750,7 +750,7 @@ class ModelAdmin(BaseModelAdmin):
         from django.contrib.admin.models import LogEntry, DELETION
         LogEntry.objects.log_action(
             user_id=request.user.pk,
-            content_type_id=get_content_type_for_model(object).pk,
+            content_type_id=self.get_content_type().pk,
             object_id=object.pk,
             object_repr=object_repr,
             action_flag=DELETION,
@@ -1039,7 +1039,7 @@ class ModelAdmin(BaseModelAdmin):
             'absolute_url': view_on_site_url,
             'form_url': form_url,
             'opts': opts,
-            'content_type_id': get_content_type_for_model(self.model).pk,
+            'content_type_id': self.get_content_type().pk,
             'save_as': self.save_as,
             'save_on_top': self.save_on_top,
             'to_field_var': TO_FIELD_VAR,
@@ -1387,7 +1387,10 @@ class ModelAdmin(BaseModelAdmin):
 
     @csrf_protect_m
     @transaction.atomic
-    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+    def changeform_view(self, *args, **kwargs):
+      return self._changeform_view(*args, **kwargs)
+
+    def _changeform_view(self, request, object_id=None, form_url='', extra_context=None):
 
         to_field = request.POST.get(TO_FIELD_VAR, request.GET.get(TO_FIELD_VAR))
         if to_field and not self.to_field_allowed(request, to_field):
@@ -1624,7 +1627,7 @@ class ModelAdmin(BaseModelAdmin):
         context = dict(
             self.admin_site.each_context(request),
             module_name=force_text(opts.verbose_name_plural),
-            selection_note=_('0 of %(cnt)s selected') % {'cnt': len(cl.result_list)},
+            #selection_note=_('0 of %(cnt)s selected') % {'cnt': len(cl.result_list)},
             selection_note_all=selection_note_all % {'total_count': cl.result_count},
             title=cl.title,
             is_popup=cl.is_popup,
@@ -1650,7 +1653,7 @@ class ModelAdmin(BaseModelAdmin):
         ], context)
 
     @csrf_protect_m
-    @transaction.atomic
+    #@transaction.atomic
     def delete_view(self, request, object_id, extra_context=None):
         "The 'delete' admin view for this model."
         opts = self.model._meta
@@ -1736,7 +1739,7 @@ class ModelAdmin(BaseModelAdmin):
         app_label = opts.app_label
         action_list = LogEntry.objects.filter(
             object_id=unquote(object_id),
-            content_type=get_content_type_for_model(model)
+            content_type=self.get_content_type()
         ).select_related().order_by('action_time')
 
         context = dict(self.admin_site.each_context(request),
