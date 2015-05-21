@@ -1652,6 +1652,14 @@ class ModelAdmin(BaseModelAdmin):
             'admin/change_list.html'
         ], context)
 
+    def get_deleted_objects(self, obj, user):
+        opts = self.model._meta
+        using = router.db_for_write(self.model)
+
+        # Populate deleted_objects, a data structure of all related objects that
+        # will also be deleted.
+        return get_deleted_objects([obj], opts, user, self.admin_site, using)
+
     @csrf_protect_m
     #@transaction.atomic
     def delete_view(self, request, object_id, extra_context=None):
@@ -1674,12 +1682,7 @@ class ModelAdmin(BaseModelAdmin):
                 {'name': force_text(opts.verbose_name), 'key': escape(object_id)}
             )
 
-        using = router.db_for_write(self.model)
-
-        # Populate deleted_objects, a data structure of all related objects that
-        # will also be deleted.
-        (deleted_objects, model_count, perms_needed, protected) = get_deleted_objects(
-            [obj], opts, request.user, self.admin_site, using)
+        (deleted_objects, model_count, perms_needed, protected) = self.get_deleted_objects(obj, request.user)
 
         if request.POST:  # The user has already confirmed the deletion.
             if perms_needed:
