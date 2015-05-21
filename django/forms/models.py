@@ -779,14 +779,19 @@ class BaseModelFormSet(BaseFormSet):
 
     def add_fields(self, form, index):
         """Add a hidden field for the object's primary key."""
+        self._pk_field = self.model._meta.pk
+        self.add_pk_field(form, index)
+        super(BaseModelFormSet, self).add_fields(form, index)
+
+    def add_pk_field(self, form, index):
         from django.db.models import AutoField, OneToOneField, ForeignKey
-        self._pk_field = pk = self.model._meta.pk
         # If a pk isn't editable, then it won't be on the form, so we need to
         # add it here so we can tell which object is which when we get the
         # data back. Generally, pk.editable should be false, but for some
         # reason, auto_created pk fields and AutoField's editable attribute is
         # True, so check for that as well.
 
+        pk = self._pk_field
         def pk_is_not_editable(pk):
             return (
                 (not pk.editable) or (pk.auto_created or isinstance(pk, AutoField)) or (
@@ -818,7 +823,6 @@ class BaseModelFormSet(BaseFormSet):
             else:
                 widget = HiddenInput
             form.fields[self._pk_field.name] = ModelChoiceField(qs, initial=pk_value, required=False, widget=widget)
-        super(BaseModelFormSet, self).add_fields(form, index)
 
 
 def modelformset_factory(model, form=ModelForm, formfield_callback=None,
@@ -865,12 +869,16 @@ class BaseInlineFormSet(BaseModelFormSet):
         self.save_as_new = save_as_new
         if queryset is None:
             queryset = self.model._default_manager
+        qs = self.get_filtered_queryset(queryset)
+        super(BaseInlineFormSet, self).__init__(data, files, prefix=prefix,
+                                                queryset=qs, **kwargs)
+
+    def get_filtered_queryset(self, queryset):
         if self.instance.pk is not None:
             qs = queryset.filter(**{self.fk.name: self.instance})
         else:
             qs = queryset.none()
-        super(BaseInlineFormSet, self).__init__(data, files, prefix=prefix,
-                                                queryset=qs, **kwargs)
+        return qs
 
     def initial_form_count(self):
         if self.save_as_new:
@@ -984,9 +992,9 @@ def _get_foreign_key(parent_model, model, fk_name=None, can_fail=False):
         # Try to discover what the ForeignKey from model to parent_model is
         fks_to_parent = [
             f for f in opts.fields
-            if isinstance(f, ForeignKey)
-            and (f.remote_field.model == parent_model
-                or f.remote_field.model in parent_model._meta.get_parent_list())
+            if f.one_to_many
+            and (f.related_model == parent_model
+                or f.related_model in parent_model._meta.get_parent_list())
         ]
         if len(fks_to_parent) == 1:
             fk = fks_to_parent[0]
