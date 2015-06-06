@@ -1621,14 +1621,9 @@ class ModelAdmin(BaseModelAdmin):
         else:
             action_form = None
 
-        selection_note_all = ungettext('%(total_count)s selected',
-            'All %(total_count)s selected', cl.result_count)
-
         context = dict(
             self.admin_site.each_context(request),
             module_name=force_text(opts.verbose_name_plural),
-            #selection_note=_('0 of %(cnt)s selected') % {'cnt': len(cl.result_list)},
-            selection_note_all=selection_note_all % {'total_count': cl.result_count},
             title=cl.title,
             is_popup=cl.is_popup,
             to_field=cl.to_field,
@@ -1642,6 +1637,14 @@ class ModelAdmin(BaseModelAdmin):
             actions_selection_counter=self.actions_selection_counter,
             preserved_filters=self.get_preserved_filters(request),
         )
+        if self.actions_selection_counter:
+            selection_note_all = ungettext('%(total_count)s selected',
+                'All %(total_count)s selected', cl.result_count)
+            context.update(dict(
+                selection_note=_('0 of %(cnt)s selected') % {'cnt': len(cl.result_list)},
+                selection_note_all=selection_note_all % {'total_count': cl.result_count},
+            ))
+
         context.update(extra_context or {})
 
         request.current_app = self.admin_site.name
