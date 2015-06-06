@@ -992,9 +992,9 @@ def _get_foreign_key(parent_model, model, fk_name=None, can_fail=False):
         # Try to discover what the ForeignKey from model to parent_model is
         fks_to_parent = [
             f for f in opts.fields
-            if f.one_to_many
-            and (f.related_model == parent_model
-                or f.related_model in parent_model._meta.get_parent_list())
+            if (f.many_to_one or f.one_to_one)
+            and (f.remote_field.model == parent_model
+                or f.remote_field.model in parent_model._meta.get_parent_list())
         ]
         if len(fks_to_parent) == 1:
             fk = fks_to_parent[0]
