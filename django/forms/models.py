@@ -911,7 +911,7 @@ class BaseInlineFormSet(BaseModelFormSet):
         # Ensure the latest copy of the related instance is present on each
         # form (it may have been saved after the formset was originally
         # instantiated).
-        setattr(form.instance, self.fk.name, self.instance)
+        self.fk.save_form_data(form.instance, self.instance)
         # Use commit=False so we can assign the parent key afterwards, then
         # save the object.
         obj = form.save(commit=False)
