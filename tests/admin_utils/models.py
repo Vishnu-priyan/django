@@ -75,3 +75,8 @@ class VehicleMixin(Vehicle):
 
 class Car(VehicleMixin):
     pass
+
+
+class UpperCaseField(models.CharField):
+    def display_value(self, value):
+        return value.upper()

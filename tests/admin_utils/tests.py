@@ -19,6 +19,7 @@ from django.utils.safestring import mark_safe
 
 from .models import (
     Article, Car, Count, Event, EventGuide, Location, Site, Vehicle,
+    UpperCaseField
 )
 
 
@@ -195,6 +196,10 @@ class UtilsTests(SimpleTestCase):
 
         display_value = display_for_field(12345, models.IntegerField(), self.empty_value)
         self.assertEqual(display_value, '12,345')
+
+    def test_display_for_field_calls_display_value_on_custom_field(self):
+        display_value = display_for_field('foo', UpperCaseField(), self.empty_value)
+        self.assertEqual(display_value, 'FOO')
 
     def test_label_for_field(self):
         """

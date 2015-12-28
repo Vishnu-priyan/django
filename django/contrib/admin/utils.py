@@ -383,6 +383,8 @@ def help_text_for_field(name, model):
 def display_for_field(value, field, empty_value_display):
     from django.contrib.admin.templatetags.admin_list import _boolean_icon
 
+    if hasattr(field, 'display_value'):
+        return field.display_value(value)
     if field.flatchoices:
         return dict(field.flatchoices).get(value, empty_value_display)
     # NullBooleanField needs special-case null-handling, so it comes
