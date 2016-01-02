@@ -1883,6 +1883,15 @@ class InlineModelAdmin(BaseModelAdmin):
         defaults.update(kwargs)
         base_model_form = defaults['form']
 
+
+        defaults['form'] = self.get_deletion_form_class(base_model_form)
+
+        if defaults['fields'] is None and not modelform_defines_fields(defaults['form']):
+            defaults['fields'] = forms.ALL_FIELDS
+
+        return inlineformset_factory(self.parent_model, self.model, **defaults)
+
+    def get_deletion_form_class(self, base_model_form):
         class DeleteProtectedModelForm(base_model_form):
             def hand_clean_DELETE(self):
                 """
@@ -1919,12 +1928,7 @@ class InlineModelAdmin(BaseModelAdmin):
                 self.hand_clean_DELETE()
                 return result
 
-        defaults['form'] = DeleteProtectedModelForm
-
-        if defaults['fields'] is None and not modelform_defines_fields(defaults['form']):
-            defaults['fields'] = forms.ALL_FIELDS
-
-        return inlineformset_factory(self.parent_model, self.model, **defaults)
+        return DeleteProtectedModelForm
 
     def get_fields(self, request, obj=None):
         if self.fields:
