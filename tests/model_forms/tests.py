@@ -1759,6 +1759,15 @@ class ModelChoiceFieldTests(TestCase):
             template.render(Context({'form': CategoriesForm()}))
 
 
+    def test_modelchoicefield_label_field_name(self):
+        f = forms.ModelChoiceField(Category.objects.all(), label_field_name='slug')
+        self.assertEqual(list(f.choices), [
+            ('', '---------'),
+            (self.c1.pk, 'entertainment'),
+            (self.c2.pk, "its-test"),
+            (self.c3.pk, 'third-test')])
+
+
 class ModelMultipleChoiceFieldTests(TestCase):
     def setUp(self):
         self.c1 = Category.objects.create(

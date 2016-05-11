@@ -1125,7 +1125,7 @@ method::
         are derived and which is used to validate the user's selection. It's
         evaluated when the form is rendered.
 
-    ``ModelChoiceField`` also takes two optional arguments:
+    ``ModelChoiceField`` also takes three optional arguments:
 
     .. attribute:: empty_label
 
@@ -1181,11 +1181,30 @@ method::
             ...
             </select>
 
-    The ``__str__()`` method of the model will be called to generate string
-    representations of the objects for use in the field's choices. To provide
-    customized representations, subclass ``ModelChoiceField`` and override
-    ``label_from_instance``. This method will receive a model object and should
-    return a string suitable for representing it. For example::
+
+    .. attribute:: label_field_name
+
+        The ``__str__()`` method of the model will be called to generate string
+        representations of the objects for use in the field's choices. If you
+        want the display value to be based on a specific field in the model, use
+        the optional ``label_field_name`` attribute. For example::
+
+          field1 = forms.ModelChoiceField(queryset=..., label_field_name="description")
+
+        would yield:
+
+        .. code-block:: html
+
+            <select id="id_field2" name="field2">
+            <option value="obj1.pk">obj1.description</option>
+            <option value="obj2.pk">obj2.description</option>
+            ...
+            </select>
+
+    To provide a more customized representation, subclass ``ModelChoiceField``
+    and override ``label_from_instance``. This method will receive a model
+    object and should return a string suitable for representing it. For
+    example::
 
         from django.forms import ModelChoiceField
 
@@ -1221,11 +1240,15 @@ method::
 
         Same as :class:`ModelChoiceField.queryset`.
 
-    Takes one optional argument:
+    Takes two optional arguments:
 
     .. attribute:: to_field_name
 
         Same as :class:`ModelChoiceField.to_field_name`.
+
+    .. attribute:: label_field_name
+
+        Same as :class:`ModelChoiceField.label_field_name`.
 
 Creating custom fields
 ======================

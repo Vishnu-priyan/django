@@ -1128,7 +1128,7 @@ class ModelChoiceField(ChoiceField):
     def __init__(self, queryset, empty_label="---------",
                  required=True, widget=None, label=None, initial=None,
                  help_text='', to_field_name=None, limit_choices_to=None,
-                 *args, **kwargs):
+                 label_field_name=None, *args, **kwargs):
         if required and (initial is not None):
             self.empty_label = None
         else:
@@ -1141,6 +1141,7 @@ class ModelChoiceField(ChoiceField):
         self.queryset = queryset
         self.limit_choices_to = limit_choices_to   # limit the queryset later.
         self.to_field_name = to_field_name
+        self.label_field_name = display_field_name
 
     def get_limit_choices_to(self):
         """
@@ -1175,7 +1176,11 @@ class ModelChoiceField(ChoiceField):
         presented by this object. Subclasses can override this method to
         customize the display of the choices.
         """
-        return force_text(obj)
+        if self.display_field_name:
+            value = getattr(obj, self.display_field_name)
+        else:
+            value = obj
+        return force_text(value)
 
     def _get_choices(self):
         # If self._choices is set, then somebody must have manually set
